@@ -109,15 +109,23 @@ Hora (UTC) & Evento \\
 06:17 & Se despliega el cambio en las ubicaciones más ocupadas, pero todavía sin arquitectura MCP \cite{cloudflare2022} \\
 06:27 & El despliegue llega a las ubicaciones con arquitectura MCP y el cambio se aplica en sus spines; las 19 ubicaciones quedan fuera de servicio y comienza el incidente \cite{cloudflare2022} \\
 06:32 & Cloudflare declara internamente el incidente \cite{cloudflare2022} \\
-06:51 & Se realiza el primer cambio en un router para comprobar la causa del fallo \cite{cloudflare2022} \\
-06:58 & Se confirma la causa del fallo, comienza la reversión del cambio y vuelve a operar el primer centro de datos \cite{cloudflare2022} \\
-07:42 & \pend{P4: última reversión; los 19 DC están en línea (demora por reverts cruzados)} \\
-08:00 & \pend{P4: cierre del incidente} \\
+06:51 & \pend{P3: primer cambio en un router para verificar la causa} \\
+06:58 & \pend{P3: causa raíz entendida; empieza la reversión; vuelve el primer DC} \\
+07:42 & Termina la última reversión y las 19 ubicaciones afectadas
+vuelven a operar correctamente. La recuperación se demoró porque
+algunos cambios deshicieron reversiones anteriores y el problema
+reapareció esporádicamente \cite{cloudflare2022}. \\
+
+08:00 & Se cierra el incidente \cite{cloudflare2022}. \\
 \bottomrule
 \end{tabularx}
 \end{center}
 
-\pend{P4: duración total (75 min hasta restaurar el servicio y 93 min hasta el cierre) y lectura breve de la secuencia}
+Desde el inicio, a las 06:27, hasta la restauración completa,
+a las 07:42, transcurrieron 75 minutos; hasta el cierre,
+a las 08:00, transcurrieron 93 minutos. La recuperación fue progresiva:
+el primer centro de datos volvió a estar en línea a las 06:58
+\cite{cloudflare2022}.
 
 % ---------------------------------------------------------------------
 % SECCIÓN 2 - CAUSAS RAÍZ
@@ -142,10 +150,16 @@ El cambio buscaba estandarizar las \emph{communities} BGP asociadas a los prefij
 El cambio contaba con un \emph{dry-run} y un despliegue escalonado (\emph{stagger}), pero ninguna de las dos defensas lo contuvo: el \emph{stagger} no incluía un centro de datos MCP hasta el último paso y sus pasos no eran lo bastante pequeños para detener el error antes de que alcanzara todos los spines \cite{cloudflare2022}. Ghosh et al. observan el mismo patrón: buena parte de los errores de configuración proviene de cambios recientes y podría detectarse con pruebas más rigurosas \cite{ghosh2022}.
 
 \paragraph{Personas (P3).}
-Varios ingenieros revisaron el cambio antes de aplicarlo, pero el nuevo orden de las reglas BGP pasó desapercibido. Durante la recuperación, algunos ingenieros deshicieron sin querer correcciones que otros ya habían aplicado. El fallo reapareció por momentos y la recuperación se demoró \cite{cloudflare2022}.
+\pend{P3: la revisión por pares no vio el reordenamiento; los reverts cruzados alargaron la recuperación}
 
-\paragraph{Entorno (P4).}
-\pend{P4: 19 PoP = 4 \% de la red pero 50 \% del tráfico; Multimog dejó de balancear y sobrecargó los clusters pequeños}
+\paragraph{Entorno.}
+Las 19 ubicaciones afectadas representaban el 4 \% de la red, pero
+la caída impactó al 50 \% del total de peticiones. La retirada de
+los prefijos site-local también impidió que Multimog reenviara
+peticiones entre servidores de los MCP. Los clústeres pequeños
+recibieron tanto tráfico como los grandes y se sobrecargaron.
+La concentración de tráfico y la pérdida de redistribución de carga
+amplificaron el error de configuración \cite{cloudflare2022}.
 
 % ---------------------------------------------------------------------
 % SECCIÓN 3 - IMPACTO. ORDEN: P1 -> P2 -> P3 -> P4
@@ -154,8 +168,11 @@ Varios ingenieros revisaron el cambio antes de aplicarlo, pero el nuevo orden de
 \begin{itemize}
   \item 19 centros de datos afectados, equivalentes al 4 \% de la red de Cloudflare \cite{cloudflare2022}.
   \item Pese a representar solo ese 4 \%, la caída afectó al 50 \% del total de peticiones atendidas por Cloudflare \cite{cloudflare2022}.
-\item Desde el inicio de la caída pasaron 75 minutos hasta que los 19 centros de datos volvieron a operar. El incidente se cerró 93 minutos después de que empezó \cite{cloudflare2022}.
-  \item \pend{P4: disponibilidad del mes: (43\,200 - 75)/43\,200 = 99,83 \%; el informe no reporta pérdida económica, de datos ni el SLA contractual}
+  \item \pend{P3: 75 min hasta la restauración total; 93 min hasta el cierre, con cita}
+  \item Como cálculo ilustrativo propio, un servicio totalmente
+indisponible durante 75 minutos, sin otras interrupciones en un mes
+de 30 días, tendría una disponibilidad de
+$(43\,200-75)/43\,200 \times 100 \approx 99{,}83\,\%$. \cite{cloudflare2022}.
 \end{itemize}
 
 % ---------------------------------------------------------------------
@@ -171,9 +188,15 @@ El teorema CAP, demostrado formalmente por Gilbert y Lynch, establece que ante u
 \paragraph{Tolerancia a fallos (P3).}
 \pend{P3: malla Clos/MCP, Multimog y stagger; cuál no funcionó y por qué}
 
-\paragraph{Modelo de fallo (P4).}
-\pend{P4: fallo por omisión con caída efectiva; cierre del apartado}
-
+\paragraph{Modelo de fallo.}
+Aplicando la taxonomía de dependabilidad, el defecto fue el orden
+incorrecto de los términos de la política; el estado erróneo,
+la supresión del anuncio de los prefijos site-local; y el fallo
+observable, la imposibilidad de atender correctamente las peticiones
+en las ubicaciones afectadas. Desde la comunicación, puede modelarse
+como un fallo por omisión: no se proporciona la comunicación o
+respuesta esperada, sin que ello implique que todos los servidores
+se apagaran \cite{avizienis2004,cloudflare2022}.
 % ---------------------------------------------------------------------
 % SECCIÓN 5 - MITIGACIÓN. ORDEN: P1 -> P2 -> P3 -> P4
 % P1 y P2: medidas inmediatas. P3 y P4: cambios permanentes.
@@ -185,7 +208,14 @@ Como el retiro de los prefijos cortó el acceso directo a las ubicaciones afecta
 
 \paragraph{Cambios permanentes.}
 \pend{P3: proceso de cambio y despliegue específico para MCP}
-\pend{P4: rediseño de la política y automatización (stagger + commit-confirm)}
+Cloudflare anunció el rediseño de la política de anuncios para
+evitar reordenamientos accidentales y mejoras de automatización
+para exigir un despliegue escalonado más seguro. También anunció
+una reversión automática mediante commit-confirm, que permite
+volver a la configuración anterior si el cambio no se confirma
+dentro del plazo establecido. Estas medidas buscaban reducir
+el alcance de los fallos y el tiempo de recuperación
+\cite{cloudflare2022}.
 
 \begin{center}
 \captionof{table}{Cada medida contra la causa del diagrama que ataca}
@@ -197,8 +227,10 @@ Medida & Tipo & Causa que ataca \\
 Reversión del cambio & Inmediata & Detonante: orden incorrecto de los términos \cite{cloudflare2022} \\
 Procedimientos de respaldo & Inmediata & Efecto del detonante: pérdida de acceso directo a las ubicaciones \cite{cloudflare2022} \\
 \pend{P3: fila 3} & Permanente & \pend{P3} \\
-\pend{P4: fila 4} & Permanente & \pend{P4} \\
-\bottomrule
+Rediseño de política, despliegue escalonado y reversión automática
+& Permanente
+& Reordenamiento accidental, propagación del cambio defectuoso
+y demora de recuperación \cite{cloudflare2022} \\\bottomrule
 \end{tabularx}
 \end{center}
 
@@ -219,7 +251,18 @@ Riesgo (componente) & Escenario de fallo & Relación con el caso & Medida para T
 Base de datos y aviso de confirmación (SGRA) & La confirmación de un refuerzo y el aviso al estudiante pasan por un único servidor; si el proceso se interrumpe, el refuerzo queda asignado sin aviso o el reintento lo duplica & Un fallo en un componente compartido afecta a todos los usuarios a la vez, como en Cloudflare & Registrar asignación y aviso en una sola transacción, con reintentos idempotentes & Detener el aviso, crear un refuerzo y comprobar que se confirma una sola vez y se notifica al reactivar, sin duplicados \\
 Venta de asientos entre estaciones (cooperativa) & Una estación de un cantón pierde conexión con el servidor central y sigue vendiendo con datos locales; otra estación vende el mismo asiento y el pasajero llega con un boleto duplicado & Como en Cloudflare, una partición aísla algunas ubicaciones; aquí la elección entre consistencia y disponibilidad debe decidirse en el diseño & Restricción única (viaje, asiento) en la base central y, sin conexión, venta solo de un cupo de asientos asignado a cada estación & Desconectar una estación, intentar vender el mismo asiento desde dos estaciones y comprobar que solo se confirma una venta \\
 \pend{R3 P3} & \pend{} & \pend{} & \pend{} & \pend{} \\
-\pend{R4 P4} & \pend{} & \pend{} & \pend{} & \pend{} \\
+Reservas de laboratorios (CLAB)
+& Tras una caída, las solicitudes recibidas por Excel o WhatsApp
+podrían generar reservas duplicadas. Un problema físico también
+podría impedir usar un laboratorio reservado
+& Como en Cloudflare, una interrupción exige coordinar la recuperación
+para no agravar el problema
+& Comprobar horarios e impedimentos antes de aprobar. Durante una
+caída, recibir solicitudes sin confirmarlas; después, revisarlas
+y avisar al docente si no puede usar el laboratorio
+& Simular dos solicitudes para el mismo laboratorio y horario:
+solo una debe aprobarse. Simular un impedimento y comprobar
+que se avisa al docente afectado \\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -242,8 +285,10 @@ N. & Origen & Observación recibida & Cambio realizado o razón para no aplicarl
 1 & Revisión interna (equipo) & La transparencia de fallos quedaba enunciada sin respaldo textual del informe. & Se añadió la cita al hecho de que la recuperación exigió intervención manual de los ingenieros; se ve en §4, párrafo Transparencia. \\
 2 & Mario Zambrano & El apartado CAP no aclaraba que el teorema se refiere a datos replicados, por lo que la partición del caso es solo una analogía & Se agregó la aclaración en el apartado CAP sin exceder el límite de dos páginas \\
 3 & \pend{quién observó} & \pend{P3} & \pend{} \\
-4 & \pend{quién observó} & \pend{P4} & \pend{} \\
-\bottomrule
+4 & Roger García (revisión interna a P1)
+& La descripción geográfica omite Oceanía, aunque el informe
+incluye Sydney entre las ubicaciones afectadas.
+& Observación comunicada a P1; corrección pendiente de incorporación. \\\bottomrule
 \end{tabularx}
 \end{center}
 
