@@ -1,1 +1,263 @@
+% =====================================================================
+% FORM-AC-01 - Análisis de caso: fallo real en un sistema distribuido
+% Caso: Cloudflare, 19 centros de datos (21 de junio de 2022)
+% Equipo: CGMZ
+%
+% REPARTO - todos trabajan en ESTE archivo, por turnos:
+%   Sección 1 Descripción ...... P1 -> P2 -> P3 -> P4
+%   Sección 2 Causas raíz ....... P1 -> P2 -> P3 -> P4 (y su rama del .drawio)
+%   Sección 3 Impacto ........... P1 -> P2 -> P3 -> P4
+%   Sección 4 Unidad 1 .......... P1 -> P2 -> P3 -> P4
+%   Sección 5 Mitigación ........ P1 -> P2 -> P3 -> P4
+%   Sección 6 Lecciones PFC ..... P1 -> P2 -> P3 -> P4
+%   Tabla C8 .................... una fila por integrante
+%
+% =====================================================================
+\documentclass[10pt,a4paper]{article}
 
+% ---------- Idioma y tipografía ----------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{newtxtext,newtxmath}
+\usepackage{microtype}
+\usepackage{csquotes}
+
+% ---------- Página ----------
+\usepackage[margin=2.2cm,headheight=14pt]{geometry}
+\usepackage{array,tabularx,booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{fancyhdr}
+\usepackage[backend=biber,style=ieee,sorting=none]{biblatex}
+\addbibresource{referencias.bib}
+\usepackage{xurl}
+\usepackage[hidelinks,breaklinks=true]{hyperref}
+\urlstyle{same}
+
+\graphicspath{{diagramas/}}
+\captionsetup{font=small,labelfont=bf,skip=2pt}
+\addto\captionsspanish{\renewcommand{\tablename}{Tabla}}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{3pt}
+\setlength{\emergencystretch}{2em}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+
+% Marcador de texto faltante. Debe desaparecer en v2-final.
+\newcommand{\pend}[1]{\textcolor{red}{\textbf{[PENDIENTE: #1]}}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize FORM-AC-01}
+\fancyhead[R]{\footnotesize Aplicaciones Distribuidas}
+\fancyfoot[C]{\footnotesize Página \thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\begin{document}
+
+% =====================================================================
+% CARÁTULA (no cuenta para las 2 páginas) - la completa P1
+% =====================================================================
+\begin{titlepage}
+\centering
+{\scshape\large Universidad Técnica Estatal de Quevedo\par}
+{\scshape Facultad de Ciencias de la Computación - Carrera de Software\par}
+\vspace{1.2cm}
+{\Large\bfseries Análisis de caso: fallo real en un sistema distribuido\par}
+\vspace{0.3cm}
+{\large FORM-AC-01 - Aplicaciones Distribuidas (ISR-701)\par}
+\vspace{1.4cm}
+{\large\bfseries Caso: Cloudflare, 19 centros de datos (21 de junio de 2022)\par}
+\vspace{1.4cm}
+\begin{tabular}{@{}ll@{}}
+Equipo:      & CGMZ \\
+Integrantes: & \pend{P1 nombre completo} \\
+             & \pend{P2 nombre completo} \\
+             & \pend{P3 nombre completo} \\
+             & \pend{P4 nombre completo} \\
+Paralelo:    & \pend{A o B} \\
+Fecha:       & 14 de noviembre de 2026 \\
+Docente:     & Gleiston C. Guerrero-Ulloa, PhD \\
+\end{tabular}
+\vfill
+{\footnotesize\url{https://github.com/Yukisan-uwo/FORM-AC-01-Analisis-de-Caso-Fallo-en-Sistema-Distribuido-Real.git}\par}
+\end{titlepage}
+\setcounter{page}{2}
+
+% ---------------------------------------------------------------------
+% SECCIÓN 1 - DESCRIPCIÓN. ORDEN: P1 -> P2 -> P3 -> P4
+% P1: párrafo del sistema + filas 03:56 y 06:17
+% P2: filas 06:27 y 06:32
+% P3: filas 06:51 y 06:58
+% P4: filas 07:42 y 08:00 + párrafo de duración
+% ---------------------------------------------------------------------
+\section{Descripción del incidente}
+\pend{P1: qué sistema falló, qué es MCP y por qué un cambio de política BGP podía dejar sin servicio a sitios enteros}
+
+\begin{center}
+\captionof{table}{Línea de tiempo del incidente (todas las horas en UTC)}
+\small
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+Hora (UTC) & Evento \\
+\midrule
+03:56 & \pend{P1: despliegue en la primera ubicación (arquitectura antigua), sin impacto} \\
+06:17 & \pend{P1: despliegue en las ubicaciones más ocupadas, aún sin MCP} \\
+06:27 & \pend{P2: el cambio llega a los spines MCP; 19 PoP caen. Inicio del incidente \cite{cloudflare2022}} \\
+06:32 & \pend{P2: se declara el incidente interno} \\
+06:51 & \pend{P3: primer cambio en un router para verificar la causa} \\
+06:58 & \pend{P3: causa raíz entendida; empieza la reversión; vuelve el primer DC} \\
+07:42 & \pend{P4: última reversión; los 19 DC están en línea (demora por reverts cruzados)} \\
+08:00 & \pend{P4: cierre del incidente} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\pend{P4: duración total (75 min hasta restaurar el servicio y 93 min hasta el cierre) y lectura breve de la secuencia}
+
+% ---------------------------------------------------------------------
+% SECCIÓN 2 - CAUSAS RAÍZ. ORDEN: P1 -> P2 -> P3 -> P4
+% P1: intro + detonante + espina Tecnología
+% P2: espina Procesos + exportar causas.pdf desde causas.drawio
+% P3: espina Personas
+% P4: espina Entorno + amplificador
+% ---------------------------------------------------------------------
+\section{Causas raíz}
+\pend{P1: intro de 2 líneas con el detonante, lo que lo amplificó y las defensas que fallaron}
+
+\begin{center}
+\IfFileExists{diagramas/causas.pdf}{%
+  \includegraphics[width=0.92\linewidth]{diagramas/causas.pdf}%
+}{%
+  \fbox{\parbox[c][5cm][c]{0.85\linewidth}{\centering
+  \pend{P2: exportar diagramas/causas.pdf desde causas.drawio}}}%
+}
+\captionof{figure}{Diagrama de Ishikawa del incidente. Elaboración propia en draw.io.}
+\end{center}
+
+\paragraph{Tecnología (P1).}
+\pend{P1: reordenamiento de términos; REJECT-THE-REST delante de 4/6-ADV-SITE-LOCALS; withdraw de prefijos \cite{cloudflare2022}}
+
+\paragraph{Procesos (P2).}
+\pend{P2: stagger sin ningún DC MCP hasta el último paso; pasos no suficientemente pequeños; el dry-run no detectó el reordenamiento}
+
+\paragraph{Personas (P3).}
+\pend{P3: la revisión por pares no vio el reordenamiento; los reverts cruzados alargaron la recuperación}
+
+\paragraph{Entorno (P4).}
+\pend{P4: 19 PoP = 4 \% de la red pero 50 \% del tráfico; Multimog dejó de balancear y sobrecargó los clusters pequeños}
+
+% ---------------------------------------------------------------------
+% SECCIÓN 3 - IMPACTO. ORDEN: P1 -> P2 -> P3 -> P4
+% ---------------------------------------------------------------------
+\section{Impacto cuantificado}
+\begin{itemize}
+  \item \pend{P1: 19 centros de datos, 4 \% de la red, con cita \cite{cloudflare2022}}
+  \item \pend{P2: 50 \% de las peticiones HTTP globales afectadas, con cita}
+  \item \pend{P3: 75 min hasta la restauración total; 93 min hasta el cierre, con cita}
+  \item \pend{P4: disponibilidad del mes: (43\,200 - 75)/43\,200 = 99,83 \%; el informe no reporta pérdida económica, de datos ni el SLA contractual}
+\end{itemize}
+
+% ---------------------------------------------------------------------
+% SECCIÓN 4 - UNIDAD 1. ORDEN: P1 -> P2 -> P3 -> P4
+% ---------------------------------------------------------------------
+\section{Relación con la Unidad 1}
+\paragraph{Transparencia (P1).}
+\pend{P1: ubicación como principal (solo fallan usuarios de ciertos PoP) y de fallos como secundaria; un hecho citado}
+
+\paragraph{CAP (P2).}
+\pend{P2: hubo partición de facto por el withdraw; no fue un trade-off C/A deliberado; CAP no explica la causa}
+
+\paragraph{Tolerancia a fallos (P3).}
+\pend{P3: malla Clos/MCP, Multimog y stagger; cuál no funcionó y por qué}
+
+\paragraph{Modelo de fallo (P4).}
+\pend{P4: fallo por omisión con caída efectiva; cierre del apartado}
+
+% ---------------------------------------------------------------------
+% SECCIÓN 5 - MITIGACIÓN. ORDEN: P1 -> P2 -> P3 -> P4
+% P1 y P2: medidas inmediatas. P3 y P4: cambios permanentes.
+% ---------------------------------------------------------------------
+\section{Mitigación aplicada por la empresa}
+\paragraph{Medidas inmediatas.}
+\pend{P1: reversión del cambio y recuperación del primer DC a las 06:58}
+\pend{P2: procedimientos de respaldo para recuperar el control de las ubicaciones}
+
+\paragraph{Cambios permanentes.}
+\pend{P3: proceso de cambio y despliegue específico para MCP}
+\pend{P4: rediseño de la política y automatización (stagger + commit-confirm)}
+
+\begin{center}
+\captionof{table}{Cada medida contra la causa del diagrama que ataca}
+\small
+\begin{tabularx}{\linewidth}{@{}p{4.2cm}lX@{}}
+\toprule
+Medida & Tipo & Causa que ataca \\
+\midrule
+\pend{P1: fila 1} & Inmediata  & \pend{P1: causa atacada \cite{cloudflare2022}} \\
+\pend{P2: fila 2} & Inmediata  & \pend{P2} \\
+\pend{P3: fila 3} & Permanente & \pend{P3} \\
+\pend{P4: fila 4} & Permanente & \pend{P4} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ---------------------------------------------------------------------
+% SECCIÓN 6 - LECCIONES PARA EL PFC. ORDEN: P1 -> P2 -> P3 -> P4
+% Un riesgo por integrante (la guía pide al menos tres).
+% ---------------------------------------------------------------------
+\section{Lecciones aprendidas para el proyecto propio}
+\pend{P1: intro de 1-2 líneas que conecte el caso con el PFC del equipo}
+
+\begin{center}
+\captionof{table}{Riesgos del PFC y medidas preventivas para TA-PFC-E1}
+\scriptsize
+\begin{tabularx}{\linewidth}{@{}p{2.3cm}XXp{3.1cm}X@{}}
+\toprule
+Riesgo (componente) & Escenario de fallo & Relación con el caso & Medida para TA-PFC-E1 & Cómo se verifica \\
+\midrule
+\pend{R1 P1} & \pend{} & \pend{} & \pend{} & \pend{} \\
+\pend{R2 P2} & \pend{} & \pend{} & \pend{} & \pend{} \\
+\pend{R3 P3} & \pend{} & \pend{} & \pend{} & \pend{} \\
+\pend{R4 P4} & \pend{} & \pend{} & \pend{} & \pend{} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% =====================================================================
+% NO CUENTA PARA LAS 2 PÁGINAS
+% =====================================================================
+
+% ---------------------------------------------------------------------
+% TABLA C8 - una fila por integrante, con una observación real de la
+% revisión interna (no hay sesión de pares: el docente no la programó).
+% ---------------------------------------------------------------------
+\section*{Tabla de retroalimentación incorporada}
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}p{0.6cm}p{2.2cm}XX@{}}
+\toprule
+N. & Origen & Observación recibida & Cambio realizado o razón para no aplicarlo \\
+\midrule
+1 & \pend{quién observó} & \pend{P1} & \pend{} \\
+2 & \pend{quién observó} & \pend{P2} & \pend{} \\
+3 & \pend{quién observó} & \pend{P3} & \pend{} \\
+4 & \pend{quién observó} & \pend{P4} & \pend{} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+{\footnotesize Nota: el docente no programó la sesión de exposición ni la evaluación entre pares; por eso las observaciones provienen de la revisión interna entre los cuatro integrantes. Las hojas de pares, de existir, están en \texttt{pares/}.}
+
+% ---------------------------------------------------------------------
+% DECLARACIÓN DE USO DE IA
+% ---------------------------------------------------------------------
+\section*{Declaración de uso de inteligencia artificial}
+Herramienta: \pend{nombre y versión}. Uso: \pend{para qué se usó; por ejemplo, ordenar la línea de tiempo y localizar la sección exacta del informe}. Verificación: \pend{cómo se contrastó cada dato con el informe oficial y cómo se verificaron los DOI con Crossref}. El equipo revisó y reescribió el texto y puede explicar cada afirmación.
+
+\printbibliography
+
+\end{document}
