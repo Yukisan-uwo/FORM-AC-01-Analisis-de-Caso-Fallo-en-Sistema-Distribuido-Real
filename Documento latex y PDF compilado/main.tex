@@ -153,7 +153,7 @@ El cambio contaba con un \emph{dry-run} y un despliegue escalonado (\emph{stagge
 \section{Impacto cuantificado}
 \begin{itemize}
   \item 19 centros de datos afectados, equivalentes al 4 \% de la red de Cloudflare \cite{cloudflare2022}.
-  \item \pend{P2: 50 \% de las peticiones HTTP globales afectadas, con cita}
+  \item Pese a representar solo ese 4 \%, la caída afectó al 50 \% del total de peticiones atendidas por Cloudflare \cite{cloudflare2022}.
   \item \pend{P3: 75 min hasta la restauración total; 93 min hasta el cierre, con cita}
   \item \pend{P4: disponibilidad del mes: (43\,200 - 75)/43\,200 = 99,83 \%; el informe no reporta pérdida económica, de datos ni el SLA contractual}
 \end{itemize}
@@ -162,11 +162,11 @@ El cambio contaba con un \emph{dry-run} y un despliegue escalonado (\emph{stagge
 % SECCIÓN 4 - UNIDAD 1. ORDEN: P1 -> P2 -> P3 -> P4
 % ---------------------------------------------------------------------
 \section{Relación con la Unidad 1}
-\paragraph{Transparencia (P1).}
+\paragraph{Transparencia.}
 Se rompió la transparencia de ubicación: el usuario no debía notar desde qué centro de datos lo atendían, pero el informe reconoce que, según su ubicación en el mundo, pudo quedar sin acceso a sitios y servicios que dependen de Cloudflare, mientras en otras regiones la red seguía operando con normalidad \cite{cloudflare2022}. De forma secundaria se rompió la transparencia de fallos: la caída fue visible y la recuperación exigió intervención manual de los ingenieros.
 
-\paragraph{CAP (P2).}
-\pend{P2: hubo partición de facto por el withdraw; no fue un trade-off C/A deliberado; CAP no explica la causa}
+\paragraph{CAP.}
+El teorema CAP, demostrado formalmente por Gilbert y Lynch, establece que ante una partición de red un sistema distribuido no puede garantizar a la vez consistencia y disponibilidad \cite{gilbert2002}; Brewer precisa que esa elección solo se presenta mientras dura la partición \cite{brewer2012}. Al dejar de anunciarse los prefijos site-local, las 19 ubicaciones quedaron aisladas de los orígenes y del resto de la red, lo que equivale a una partición de facto, aunque solo por analogía, porque CAP se refiere a datos replicados. Sin embargo, no hubo un \emph{trade-off} deliberado entre C y A: la disponibilidad se perdió por un error de configuración, no por una decisión de diseño para preservar la consistencia. CAP describe la consecuencia, pero no explica la causa, que está en el proceso de cambio.
 
 \paragraph{Tolerancia a fallos (P3).}
 \pend{P3: malla Clos/MCP, Multimog y stagger; cuál no funcionó y por qué}
@@ -181,7 +181,7 @@ Se rompió la transparencia de ubicación: el usuario no debía notar desde qué
 \section{Mitigación aplicada por la empresa}
 \paragraph{Medidas inmediatas.}
 Se revirtió el cambio defectuoso; a las 06:58 volvió a estar en línea el primer centro de datos \cite{cloudflare2022}.
-\pend{P2: procedimientos de respaldo para recuperar el control de las ubicaciones}
+Como el retiro de los prefijos cortó el acceso directo a las ubicaciones afectadas, los ingenieros recurrieron a procedimientos de respaldo previstos para este tipo de eventos y recuperaron su control para aplicar la reversión; el informe no detalla en qué consisten \cite{cloudflare2022}.
 
 \paragraph{Cambios permanentes.}
 \pend{P3: proceso de cambio y despliegue específico para MCP}
@@ -195,7 +195,7 @@ Se revirtió el cambio defectuoso; a las 06:58 volvió a estar en línea el prim
 Medida & Tipo & Causa que ataca \\
 \midrule
 Reversión del cambio & Inmediata & Detonante: orden incorrecto de los términos \cite{cloudflare2022} \\
-\pend{P2: fila 2} & Inmediata  & \pend{P2} \\
+Procedimientos de respaldo & Inmediata & Efecto del detonante: pérdida de acceso directo a las ubicaciones \cite{cloudflare2022} \\
 \pend{P3: fila 3} & Permanente & \pend{P3} \\
 \pend{P4: fila 4} & Permanente & \pend{P4} \\
 \bottomrule
@@ -217,7 +217,7 @@ Los proyectos del equipo comparten con Cloudflare una dependencia de servicios c
 Riesgo (componente) & Escenario de fallo & Relación con el caso & Medida para TA-PFC-E1 & Cómo se verifica \\
 \midrule
 Base de datos y aviso de confirmación (SGRA) & La confirmación de un refuerzo y el aviso al estudiante pasan por un único servidor; si el proceso se interrumpe, el refuerzo queda asignado sin aviso o el reintento lo duplica & Un fallo en un componente compartido afecta a todos los usuarios a la vez, como en Cloudflare & Registrar asignación y aviso en una sola transacción, con reintentos idempotentes & Detener el aviso, crear un refuerzo y comprobar que se confirma una sola vez y se notifica al reactivar, sin duplicados \\
-\pend{R2 P2} & \pend{} & \pend{} & \pend{} & \pend{} \\
+Venta de asientos entre estaciones (cooperativa) & Una estación de un cantón pierde conexión con el servidor central y sigue vendiendo con datos locales; otra estación vende el mismo asiento y el pasajero llega con un boleto duplicado & Como en Cloudflare, una partición aísla algunas ubicaciones; aquí la elección entre consistencia y disponibilidad debe decidirse en el diseño & Restricción única (viaje, asiento) en la base central y, sin conexión, venta solo de un cupo de asientos asignado a cada estación & Desconectar una estación, intentar vender el mismo asiento desde dos estaciones y comprobar que solo se confirma una venta \\
 \pend{R3 P3} & \pend{} & \pend{} & \pend{} & \pend{} \\
 \pend{R4 P4} & \pend{} & \pend{} & \pend{} & \pend{} \\
 \bottomrule
@@ -240,7 +240,7 @@ Base de datos y aviso de confirmación (SGRA) & La confirmación de un refuerzo 
 N. & Origen & Observación recibida & Cambio realizado o razón para no aplicarlo \\
 \midrule
 1 & Revisión interna (equipo) & La transparencia de fallos quedaba enunciada sin respaldo textual del informe. & Se añadió la cita al hecho de que la recuperación exigió intervención manual de los ingenieros; se ve en §4, párrafo Transparencia. \\
-2 & \pend{quién observó} & \pend{P2} & \pend{} \\
+2 & Mario Zambrano & El apartado CAP no aclaraba que el teorema se refiere a datos replicados, por lo que la partición del caso es solo una analogía & Se agregó la aclaración en el apartado CAP sin exceder el límite de dos páginas \\
 3 & \pend{quién observó} & \pend{P3} & \pend{} \\
 4 & \pend{quién observó} & \pend{P4} & \pend{} \\
 \bottomrule
