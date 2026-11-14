@@ -74,11 +74,12 @@
 \vspace{1.4cm}
 \begin{tabular}{@{}ll@{}}
 Equipo:      & CGMZ \\
-Integrantes: & \pend{P1 nombre completo} \\
-             & \pend{P2 nombre completo} \\
-             & \pend{P3 nombre completo} \\
-             & \pend{P4 nombre completo} \\
-Paralelo:    & \pend{A o B} \\
+Integrantes: & ZAMBRANO PARRAGA LUIS MARIO (P1) \\
+             & MERA JUMBO ALLISON MICHELLE (P2) \\
+             & CALDERON SALTOS JOSEPH ALEXANDER (P3) \\
+             & GARCIA SANGOQUIZA ROGER STEVEN (P4) \\
+Paralelo:    & A \\
+Semestre:    & Séptimo \\
 Fecha:       & 14 de noviembre de 2026 \\
 Docente:     & Gleiston C. Guerrero-Ulloa, PhD \\
 \end{tabular}
@@ -87,15 +88,15 @@ Docente:     & Gleiston C. Guerrero-Ulloa, PhD \\
 \end{titlepage}
 \setcounter{page}{2}
 
+% =====================================================================
+% CONTENIDO EVALUABLE: máximo 2 páginas desde aquí
+% =====================================================================
+
 % ---------------------------------------------------------------------
-% SECCIÓN 1 - DESCRIPCIÓN. ORDEN: P1 -> P2 -> P3 -> P4
-% P1: párrafo del sistema + filas 03:56 y 06:17
-% P2: filas 06:27 y 06:32
-% P3: filas 06:51 y 06:58
-% P4: filas 07:42 y 08:00 + párrafo de duración
+% SECCIÓN 1 - DESCRIPCIÓN.
 % ---------------------------------------------------------------------
 \section{Descripción del incidente}
-\pend{P1: qué sistema falló, qué es MCP y por qué un cambio de política BGP podía dejar sin servicio a sitios enteros}
+Cloudflare es una red de entrega de contenido y de seguridad que atiende tráfico en todo el mundo desde centros de datos distribuidos. Sus 19 ubicaciones más ocupadas ---en América, Europa y Asia--- usan la arquitectura Multi-Colo PoP (MCP), una red Clos con una capa de enrutamiento (spines) que permite habilitar y deshabilitar partes de la red interna sin cortar el tráfico. Para ser alcanzable, cada ubicación anuncia sus prefijos mediante BGP; si una política deja de anunciarlos, esas direcciones quedan inalcanzables. Eso ocurrió el 21 de junio de 2022: el incidente comenzó a las 06:27 UTC y el servicio se restableció a las 07:42 UTC \cite{cloudflare2022}.
 
 \begin{center}
 \captionof{table}{Línea de tiempo del incidente (todas las horas en UTC)}
@@ -104,8 +105,8 @@ Docente:     & Gleiston C. Guerrero-Ulloa, PhD \\
 \toprule
 Hora (UTC) & Evento \\
 \midrule
-03:56 & \pend{P1: despliegue en la primera ubicación (arquitectura antigua), sin impacto} \\
-06:17 & \pend{P1: despliegue en las ubicaciones más ocupadas, aún sin MCP} \\
+03:56 & Se despliega el cambio en la primera ubicación, de arquitectura antigua; ninguna ubicación resulta afectada \cite{cloudflare2022} \\
+06:17 & Se despliega el cambio en las ubicaciones más ocupadas, pero todavía sin arquitectura MCP \cite{cloudflare2022} \\
 06:27 & \pend{P2: el cambio llega a los spines MCP; 19 PoP caen. Inicio del incidente \cite{cloudflare2022}} \\
 06:32 & \pend{P2: se declara el incidente interno} \\
 06:51 & \pend{P3: primer cambio en un router para verificar la causa} \\
@@ -119,14 +120,10 @@ Hora (UTC) & Evento \\
 \pend{P4: duración total (75 min hasta restaurar el servicio y 93 min hasta el cierre) y lectura breve de la secuencia}
 
 % ---------------------------------------------------------------------
-% SECCIÓN 2 - CAUSAS RAÍZ. ORDEN: P1 -> P2 -> P3 -> P4
-% P1: intro + detonante + espina Tecnología
-% P2: espina Procesos + exportar causas.pdf desde causas.drawio
-% P3: espina Personas
-% P4: espina Entorno + amplificador
+% SECCIÓN 2 - CAUSAS RAÍZ
 % ---------------------------------------------------------------------
 \section{Causas raíz}
-\pend{P1: intro de 2 líneas con el detonante, lo que lo amplificó y las defensas que fallaron}
+El incidente se explica en tres niveles: un detonante técnico, causas que amplificaron su efecto y defensas que debían contenerlo y no lo hicieron \cite{cloudflare2022}. La causa raíz pasa la prueba de que, sin ella, la caída no habría ocurrido: el orden de los términos de una política de anuncio.
 
 \begin{center}
 \IfFileExists{diagramas/causas.pdf}{%
@@ -139,7 +136,7 @@ Hora (UTC) & Evento \\
 \end{center}
 
 \paragraph{Tecnología (P1).}
-\pend{P1: reordenamiento de términos; REJECT-THE-REST delante de 4/6-ADV-SITE-LOCALS; withdraw de prefijos \cite{cloudflare2022}}
+El cambio buscaba estandarizar las \emph{communities} BGP asociadas a los prefijos \emph{site-local}, que permiten que los servidores de un MCP se comuniquen entre sí y alcancen los orígenes de los clientes. En los spines, el diff reordenó los términos de la política \texttt{AGGREGATES-OUT}: \texttt{4-ADV-SITE-LOCALS} y \texttt{6-ADV-SITE-LOCALS} pasaron al final, detrás de \texttt{REJECT-THE-REST}, un término que rechaza de forma explícita todo lo que le sigue. Desde ese momento Cloudflare dejó de anunciar los prefijos site-local y perdió el acceso directo a las ubicaciones afectadas y a los orígenes \cite{cloudflare2022}. El reordenamiento es el detonante; que la política pudiera reordenarse sin un control que lo impidiera es la causa raíz.
 
 \paragraph{Procesos (P2).}
 \pend{P2: stagger sin ningún DC MCP hasta el último paso; pasos no suficientemente pequeños; el dry-run no detectó el reordenamiento}
@@ -155,7 +152,7 @@ Hora (UTC) & Evento \\
 % ---------------------------------------------------------------------
 \section{Impacto cuantificado}
 \begin{itemize}
-  \item \pend{P1: 19 centros de datos, 4 \% de la red, con cita \cite{cloudflare2022}}
+  \item 19 centros de datos afectados, equivalentes al 4 \% de la red de Cloudflare \cite{cloudflare2022}.
   \item \pend{P2: 50 \% de las peticiones HTTP globales afectadas, con cita}
   \item \pend{P3: 75 min hasta la restauración total; 93 min hasta el cierre, con cita}
   \item \pend{P4: disponibilidad del mes: (43\,200 - 75)/43\,200 = 99,83 \%; el informe no reporta pérdida económica, de datos ni el SLA contractual}
@@ -166,7 +163,7 @@ Hora (UTC) & Evento \\
 % ---------------------------------------------------------------------
 \section{Relación con la Unidad 1}
 \paragraph{Transparencia (P1).}
-\pend{P1: ubicación como principal (solo fallan usuarios de ciertos PoP) y de fallos como secundaria; un hecho citado}
+Se rompió la transparencia de ubicación: el usuario no debía notar desde qué centro de datos lo atendían, pero el informe reconoce que, según su ubicación en el mundo, pudo quedar sin acceso a sitios y servicios que dependen de Cloudflare, mientras en otras regiones la red seguía operando con normalidad \cite{cloudflare2022}. De forma secundaria se rompió la transparencia de fallos: la caída fue visible y la recuperación exigió intervención manual de los ingenieros.
 
 \paragraph{CAP (P2).}
 \pend{P2: hubo partición de facto por el withdraw; no fue un trade-off C/A deliberado; CAP no explica la causa}
@@ -183,7 +180,7 @@ Hora (UTC) & Evento \\
 % ---------------------------------------------------------------------
 \section{Mitigación aplicada por la empresa}
 \paragraph{Medidas inmediatas.}
-\pend{P1: reversión del cambio y recuperación del primer DC a las 06:58}
+Se revirtió el cambio defectuoso; a las 06:58 volvió a estar en línea el primer centro de datos \cite{cloudflare2022}.
 \pend{P2: procedimientos de respaldo para recuperar el control de las ubicaciones}
 
 \paragraph{Cambios permanentes.}
@@ -197,7 +194,7 @@ Hora (UTC) & Evento \\
 \toprule
 Medida & Tipo & Causa que ataca \\
 \midrule
-\pend{P1: fila 1} & Inmediata  & \pend{P1: causa atacada \cite{cloudflare2022}} \\
+Reversión del cambio & Inmediata & Detonante: orden incorrecto de los términos \cite{cloudflare2022} \\
 \pend{P2: fila 2} & Inmediata  & \pend{P2} \\
 \pend{P3: fila 3} & Permanente & \pend{P3} \\
 \pend{P4: fila 4} & Permanente & \pend{P4} \\
@@ -210,7 +207,7 @@ Medida & Tipo & Causa que ataca \\
 % Un riesgo por integrante (la guía pide al menos tres).
 % ---------------------------------------------------------------------
 \section{Lecciones aprendidas para el proyecto propio}
-\pend{P1: intro de 1-2 líneas que conecte el caso con el PFC del equipo}
+Los proyectos del equipo comparten con Cloudflare una dependencia de servicios centrales: una base de datos, un servicio de avisos y una configuración que se aplica a varios nodos. Los riesgos siguientes son los puntos donde un fallo pequeño podría escalar como en el caso analizado.
 
 \begin{center}
 \captionof{table}{Riesgos del PFC y medidas preventivas para TA-PFC-E1}
@@ -219,7 +216,7 @@ Medida & Tipo & Causa que ataca \\
 \toprule
 Riesgo (componente) & Escenario de fallo & Relación con el caso & Medida para TA-PFC-E1 & Cómo se verifica \\
 \midrule
-\pend{R1 P1} & \pend{} & \pend{} & \pend{} & \pend{} \\
+Base de datos y aviso de confirmación (SGRA) & La confirmación de un refuerzo y el aviso al estudiante pasan por un único servidor; si el proceso se interrumpe, el refuerzo queda asignado sin aviso o el reintento lo duplica & Un fallo en un componente compartido afecta a todos los usuarios a la vez, como en Cloudflare & Registrar asignación y aviso en una sola transacción, con reintentos idempotentes & Detener el aviso, crear un refuerzo y comprobar que se confirma una sola vez y se notifica al reactivar, sin duplicados \\
 \pend{R2 P2} & \pend{} & \pend{} & \pend{} & \pend{} \\
 \pend{R3 P3} & \pend{} & \pend{} & \pend{} & \pend{} \\
 \pend{R4 P4} & \pend{} & \pend{} & \pend{} & \pend{} \\
@@ -256,7 +253,7 @@ N. & Origen & Observación recibida & Cambio realizado o razón para no aplicarl
 % DECLARACIÓN DE USO DE IA
 % ---------------------------------------------------------------------
 \section*{Declaración de uso de inteligencia artificial}
-Herramienta: \pend{nombre y versión}. Uso: \pend{para qué se usó; por ejemplo, ordenar la línea de tiempo y localizar la sección exacta del informe}. Verificación: \pend{cómo se contrastó cada dato con el informe oficial y cómo se verificaron los DOI con Crossref}. El equipo revisó y reescribió el texto y puede explicar cada afirmación.
+Herramienta: opencode (asistente de línea de comandos). Uso: ordenar la línea de tiempo. Verificación: cada cifra y cada cita se contrastó con el informe oficial, y cada DOI se resolvió en \url{https://doi.org} y se comparó con Crossref.
 
 \printbibliography
 
