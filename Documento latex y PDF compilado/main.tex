@@ -109,8 +109,8 @@ Hora (UTC) & Evento \\
 06:17 & Se despliega el cambio en las ubicaciones más ocupadas, pero todavía sin arquitectura MCP \cite{cloudflare2022} \\
 06:27 & El despliegue llega a las ubicaciones con arquitectura MCP y el cambio se aplica en sus spines; las 19 ubicaciones quedan fuera de servicio y comienza el incidente \cite{cloudflare2022} \\
 06:32 & Cloudflare declara internamente el incidente \cite{cloudflare2022} \\
-06:51 & \pend{P3: primer cambio en un router para verificar la causa} \\
-06:58 & \pend{P3: causa raíz entendida; empieza la reversión; vuelve el primer DC} \\
+06:51 & Se realiza el primer cambio en un router para comprobar la causa del fallo \cite{cloudflare2022} \\
+06:58 & Se confirma la causa del fallo, comienza la reversión del cambio y vuelve a operar el primer centro de datos \cite{cloudflare2022} \\
 07:42 & \pend{P4: última reversión; los 19 DC están en línea (demora por reverts cruzados)} \\
 08:00 & \pend{P4: cierre del incidente} \\
 \bottomrule
@@ -142,7 +142,7 @@ El cambio buscaba estandarizar las \emph{communities} BGP asociadas a los prefij
 El cambio contaba con un \emph{dry-run} y un despliegue escalonado (\emph{stagger}), pero ninguna de las dos defensas lo contuvo: el \emph{stagger} no incluía un centro de datos MCP hasta el último paso y sus pasos no eran lo bastante pequeños para detener el error antes de que alcanzara todos los spines \cite{cloudflare2022}. Ghosh et al. observan el mismo patrón: buena parte de los errores de configuración proviene de cambios recientes y podría detectarse con pruebas más rigurosas \cite{ghosh2022}.
 
 \paragraph{Personas (P3).}
-\pend{P3: la revisión por pares no vio el reordenamiento; los reverts cruzados alargaron la recuperación}
+Varios ingenieros revisaron el cambio antes de aplicarlo, pero el nuevo orden de las reglas BGP pasó desapercibido. Durante la recuperación, algunos ingenieros deshicieron sin querer correcciones que otros ya habían aplicado. El fallo reapareció por momentos y la recuperación se demoró \cite{cloudflare2022}.
 
 \paragraph{Entorno (P4).}
 \pend{P4: 19 PoP = 4 \% de la red pero 50 \% del tráfico; Multimog dejó de balancear y sobrecargó los clusters pequeños}
@@ -154,7 +154,7 @@ El cambio contaba con un \emph{dry-run} y un despliegue escalonado (\emph{stagge
 \begin{itemize}
   \item 19 centros de datos afectados, equivalentes al 4 \% de la red de Cloudflare \cite{cloudflare2022}.
   \item Pese a representar solo ese 4 \%, la caída afectó al 50 \% del total de peticiones atendidas por Cloudflare \cite{cloudflare2022}.
-  \item \pend{P3: 75 min hasta la restauración total; 93 min hasta el cierre, con cita}
+\item Desde el inicio de la caída pasaron 75 minutos hasta que los 19 centros de datos volvieron a operar. El incidente se cerró 93 minutos después de que empezó \cite{cloudflare2022}.
   \item \pend{P4: disponibilidad del mes: (43\,200 - 75)/43\,200 = 99,83 \%; el informe no reporta pérdida económica, de datos ni el SLA contractual}
 \end{itemize}
 
