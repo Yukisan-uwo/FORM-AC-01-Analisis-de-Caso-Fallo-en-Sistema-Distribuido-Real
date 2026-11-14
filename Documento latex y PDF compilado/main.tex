@@ -107,8 +107,8 @@ Hora (UTC) & Evento \\
 \midrule
 03:56 & Se despliega el cambio en la primera ubicación, de arquitectura antigua; ninguna ubicación resulta afectada \cite{cloudflare2022} \\
 06:17 & Se despliega el cambio en las ubicaciones más ocupadas, pero todavía sin arquitectura MCP \cite{cloudflare2022} \\
-06:27 & \pend{P2: el cambio llega a los spines MCP; 19 PoP caen. Inicio del incidente \cite{cloudflare2022}} \\
-06:32 & \pend{P2: se declara el incidente interno} \\
+06:27 & El despliegue llega a las ubicaciones con arquitectura MCP y el cambio se aplica en sus spines; las 19 ubicaciones quedan fuera de servicio y comienza el incidente \cite{cloudflare2022} \\
+06:32 & Cloudflare declara internamente el incidente \cite{cloudflare2022} \\
 06:51 & \pend{P3: primer cambio en un router para verificar la causa} \\
 06:58 & \pend{P3: causa raíz entendida; empieza la reversión; vuelve el primer DC} \\
 07:42 & \pend{P4: última reversión; los 19 DC están en línea (demora por reverts cruzados)} \\
@@ -135,11 +135,11 @@ El incidente se explica en tres niveles: un detonante técnico, causas que ampli
 \captionof{figure}{Diagrama de Ishikawa del incidente. Elaboración propia en draw.io.}
 \end{center}
 
-\paragraph{Tecnología (P1).}
+\paragraph{Tecnología.}
 El cambio buscaba estandarizar las \emph{communities} BGP asociadas a los prefijos \emph{site-local}, que permiten que los servidores de un MCP se comuniquen entre sí y alcancen los orígenes de los clientes. En los spines, el diff reordenó los términos de la política \texttt{AGGREGATES-OUT}: \texttt{4-ADV-SITE-LOCALS} y \texttt{6-ADV-SITE-LOCALS} pasaron al final, detrás de \texttt{REJECT-THE-REST}, un término que rechaza de forma explícita todo lo que le sigue. Desde ese momento Cloudflare dejó de anunciar los prefijos site-local y perdió el acceso directo a las ubicaciones afectadas y a los orígenes \cite{cloudflare2022}. El reordenamiento es el detonante; que la política pudiera reordenarse sin un control que lo impidiera es la causa raíz.
 
-\paragraph{Procesos (P2).}
-\pend{P2: stagger sin ningún DC MCP hasta el último paso; pasos no suficientemente pequeños; el dry-run no detectó el reordenamiento}
+\paragraph{Procesos.}
+El cambio contaba con un \emph{dry-run} y un despliegue escalonado (\emph{stagger}), pero ninguna de las dos defensas lo contuvo: el \emph{stagger} no incluía un centro de datos MCP hasta el último paso y sus pasos no eran lo bastante pequeños para detener el error antes de que alcanzara todos los spines \cite{cloudflare2022}. Ghosh et al. observan el mismo patrón: buena parte de los errores de configuración proviene de cambios recientes y podría detectarse con pruebas más rigurosas \cite{ghosh2022}.
 
 \paragraph{Personas (P3).}
 \pend{P3: la revisión por pares no vio el reordenamiento; los reverts cruzados alargaron la recuperación}
