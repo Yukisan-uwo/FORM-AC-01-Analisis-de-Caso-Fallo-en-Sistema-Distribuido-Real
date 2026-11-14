@@ -1,0 +1,98 @@
+% =====================================================================
+% FORM-AC-01 - Referencias
+% Cada entrada la verifica quien la cita (ver docs/verificacion-fuentes.md).
+% Regla del encuadre: una sola referencia inexistente o con DOI que lleve
+% a otra obra implica calificacion CERO (criterio de piso P4/P5).
+% =====================================================================
+
+% [1] Informe oficial del caso. Verifica P1: abrir la URL y confirmar
+% titulo, autores (Tom Strickx y Jeremy Hartman) y fecha.
+@online{cloudflare2022,
+  author       = {Strickx, Tom and Hartman, Jeremy},
+  title        = {Cloudflare outage on June 21, 2022},
+  year         = {2022},
+  note         = {21 de junio de 2022},
+  organization = {Cloudflare},
+  url          = {https://blog.cloudflare.com/cloudflare-outage-on-june-21-2022/},
+  urldate      = {2026-11-14},
+}
+
+% [2] Verifica P2 en Crossref: https://api.crossref.org/works/10.1145/3542929.3563482
+@inproceedings{ghosh2022,
+  author    = {Ghosh, S. and Shetty, M. and Bansal, C. and Nath, S.},
+  title     = {How to Fight Production Incidents? An Empirical Study on a Large-scale Cloud Service},
+  booktitle = {Proceedings of the 13th Symposium on Cloud Computing (SoCC '22)},
+  year      = {2022},
+  pages     = {126--141},
+  publisher = {ACM},
+  doi       = {10.1145/3542929.3563482},
+}
+
+% [3] Verifica P3 en Crossref: https://api.crossref.org/works/10.1145/3458336.3465286
+@inproceedings{bronson2021,
+  author    = {Bronson, Nathan and Aghayev, Abutalib and Charapko, Aleksey and Zhu, Timothy},
+  title     = {Metastable Failures in Distributed Systems},
+  booktitle = {Proceedings of the Workshop on Hot Topics in Operating Systems (HotOS '21)},
+  year      = {2021},
+  pages     = {221--227},
+  publisher = {ACM},
+  doi       = {10.1145/3458336.3465286},
+}
+
+% [4] Verifica P4 en Crossref: https://api.crossref.org/works/10.1145/2987550.2987583
+@inproceedings{gunawi2016,
+  author    = {Gunawi, Haryadi S. and Hao, Mingzhe and Suminto, Riza O. and others},
+  title     = {Why Does the Cloud Stop Computing? Lessons from Hundreds of Service Outages},
+  booktitle = {Proceedings of the Seventh ACM Symposium on Cloud Computing (SoCC '16)},
+  year      = {2016},
+  pages     = {1--16},
+  publisher = {ACM},
+  doi       = {10.1145/2987550.2987583},
+}
+
+% [5] Verifica P2 en Crossref: https://api.crossref.org/works/10.1145/3458336.3465286
+@article{brewer2012,
+  author  = {Brewer, Eric},
+  title   = {{CAP} Twelve Years Later: How the ``Rules'' Have Changed},
+  journal = {Computer},
+  year    = {2012},
+  volume  = {45},
+  number  = {2},
+  pages   = {23--29},
+  doi     = {10.1109/MC.2012.37},
+}
+
+% [6] Verifica P2 en Crossref: https://api.crossref.org/works/10.1145/564585.564601
+@article{gilbert2002,
+  author  = {Gilbert, Seth and Lynch, Nancy},
+  title   = {Brewer's Conjecture and the Feasibility of Consistent, Available, Partition-Tolerant Web Services},
+  journal = {ACM SIGACT News},
+  year    = {2002},
+  volume  = {33},
+  number  = {2},
+  pages   = {51--59},
+  doi     = {10.1145/564585.564601},
+}
+
+% [7] Verifica P3 en Crossref: https://api.crossref.org/works/10.1109/TDSC.2004.2
+@article{avizienis2004,
+  author  = {Avizienis, Algirdas and Laprie, Jean-Claude and Randell, Brian and Landwehr, Carl},
+  title   = {Basic Concepts and Taxonomy of Dependable and Secure Computing},
+  journal = {IEEE Transactions on Dependable and Secure Computing},
+  year    = {2004},
+  volume  = {1},
+  number  = {1},
+  pages   = {11--33},
+  doi     = {10.1109/TDSC.2004.2},
+}
+
+% [8] Libro base de la asignatura. Verifica P4 en la pagina del autor.
+@book{vansteen2023,
+  author    = {van Steen, Maarten and Tanenbaum, Andrew S.},
+  title     = {Distributed Systems},
+  edition   = {4},
+  year      = {2023},
+  publisher = {Maarten van Steen},
+  location  = {Amsterdam, The Netherlands},
+  isbn      = {978-90-815406-3-6},
+}
